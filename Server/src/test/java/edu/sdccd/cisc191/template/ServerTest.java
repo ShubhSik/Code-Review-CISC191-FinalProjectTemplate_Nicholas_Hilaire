@@ -10,6 +10,8 @@ package edu.sdccd.cisc191.template;
  */
 
 import org.junit.jupiter.api.Test;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -41,13 +43,32 @@ public class ServerTest
 
     }
 
-    // Test if the file is being read from the path and the contents of the file have data.
+    // Test if the file is being read from the test resources path and the contents of the file have data.
     @Test
-    public void TestIOStream()
-    {
+    public void TestIOStream() {
+        // Load file from classpath
+        ClassLoader classLoader = getClass().getClassLoader();
+        java.net.URL resource = classLoader.getResource("Broken Arrow Unit Stats.csv");
+
+        assertNotNull(resource, "Test file not found in resources folder");
+
+        try {
+            Path testFilePath = Paths.get(resource.toURI()); // Properly converts to a Path
+            List<Unit> units = UnitStatsLoader.loadUnits(testFilePath.toString());
+            assertFalse(units.isEmpty(), "The units list should not be empty");
+        } catch (Exception e) {
+            fail("Failed to load test file: " + e.getMessage());
+        }
+    }
+
+    /*
+    // Previous version that loaded the file from an absolute path
+    @Test
+    public void TestIOStream() {
         List<Unit> units = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
         assertFalse(units.isEmpty());
     }
+    */
 
     // Test if units are being created in the UnitGenerator class
     @Test
