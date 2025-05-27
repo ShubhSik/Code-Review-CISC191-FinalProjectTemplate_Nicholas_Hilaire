@@ -20,9 +20,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
+
+import static java.util.Locale.filter;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.stream.Collectors;
 
 public class ServerTest
 {
@@ -59,5 +63,48 @@ public class ServerTest
             Unit testUnit = new Unit("Test Unit", "Infantry", "Test Specialization", 100, 10, 100, 500, 1.5, 20, 2000, "Test Abilities");
 
         }
+
+    // Test Hashmap to ensure the units correspond with the correct images.
+    @Test
+    void testUnitHashMap()
+    {
+        List<Unit> units = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
+       Map<String, Unit> map = new HashMap<>();
+       for (Unit unit : units)
+       {
+           String name = unit.getUnitName();
+           if (name != null && !name.isBlank())
+           {
+               map.put(name, unit);
+           }
+       }
+
+        assertFalse(map.isEmpty(), "The map should not be empty");
+    }
+    // Test search and sorting to ensure unit appears in the correct group type
+    @Test
+    void testSearchingbyType()
+    {
+        List<Unit> units = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
+        Map<String, List<Unit>> byType = units.stream().collect(Collectors.groupingBy(Unit::getUnitType));
+
+        for (Unit unit : units)
+        {
+            String type = unit.getUnitType();
+            assertTrue(byType.containsKey(type), "The map should contain the type " + type);
+        }
+    }
+
+    //Ensure Stream APL will filter by the unit's type
+    @Test
+    public void testFilterSorting() {
+        List<Unit> units = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
+        String type = units.get(0).getUnitType();
+        List<Unit> result = units.stream()
+                .filter(u -> type.equals(u.getUnitType()))
+                .sorted(Comparator.comparing(Unit::getUnitName))
+                .collect(Collectors.toList());
+        assertFalse(result.isEmpty(), "Filtered & sorted list should not be empty");
+    }
 
 }

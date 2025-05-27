@@ -3,6 +3,11 @@ package edu.sdccd.cisc191.template;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+
 
 /**
  * Author Nicholas Hilaire
@@ -13,6 +18,7 @@ import javafx.scene.layout.VBox;
 
 public class UnitCard extends VBox
 {
+    private ImageView unitImageView;
     private Label unitNameLabel;
     private Label unitTypeLabel;
     private Label specializationLabel;
@@ -25,6 +31,13 @@ public class UnitCard extends VBox
         // Set padding and border styling
         setPadding(new Insets(10));
         setStyle("-fx-border-color: black; -fx-background-color: #f0f0f0;");
+
+        //Initialize Imageview so Unit stats can have a photo.
+        unitImageView = new ImageView();
+        unitImageView.setId("unitImageView"); // allows lookup by id
+        unitImageView.setFitWidth(120);
+        unitImageView.setFitHeight(80);
+        unitImageView.setPreserveRatio(true);
 
         // Initialize labels so it will display on the application.
         unitNameLabel = new Label();
@@ -48,4 +61,10 @@ public class UnitCard extends VBox
                     " | Health: " + unit.getHealth());
             abilitiesLabel.setText("Abilities: " + unit.getAbilities());
         }
+
+        //Sets the Image on the Unit's card
+    public void setImage(Image image)
+    {
+        unitImageView.setImage(image);
+    }
 }

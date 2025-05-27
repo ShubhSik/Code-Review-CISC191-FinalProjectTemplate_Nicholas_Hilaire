@@ -3,9 +3,10 @@ package edu.sdccd.cisc191.template;
 /**
  * Author Nicholas Hilaire
  *
- *
  * References: "Bro code: Java: Inheritance" https://www.youtube.com/watch?v=Zs342ePFvRI
  */
+
+
 
 public class Unit
 {
