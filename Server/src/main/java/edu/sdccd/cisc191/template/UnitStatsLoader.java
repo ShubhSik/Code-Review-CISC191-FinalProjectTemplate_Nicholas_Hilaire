@@ -15,8 +15,21 @@ import java.util.List;
 
 
 //Class used to access the CSV file and create units with the data from the file.
-public class UnitStatsLoader
-{
+public class UnitStatsLoader {
+    /**
+     * Loads units from a CSV file at the given path.
+     * <p>
+     * Attempts to read the file, parse each line, and create a list of Unit objects.
+     * If the file does not exist in the given path, it tries a fallback path.
+     * <p>
+     * If a file is not found or cannot be read, this method throws a RuntimeException.
+     * Lines with parsing errors are logged and skipped.
+     * </p>
+     *
+     * @param path The path to the CSV file.
+     * @return A list of Unit objects loaded from the CSV file. If file is not found or unreadable, an empty list is returned.
+     * @throws RuntimeException if the file cannot be found or read.
+     */
     public static List<Unit> loadUnits(String path)
     {
         List<Unit> units = new ArrayList<>();
@@ -76,13 +89,13 @@ public class UnitStatsLoader
         //Handles any errors if the file is not found
         catch (FileNotFoundException e)
         {
-            throw new RuntimeException(e);
+            throw new RuntimeException("File not found: " + path, e);
         }
 
         // Handles any errors and if an error occurs will return an empty string.
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error reading file: " + path, e);
         }
 
         return units;

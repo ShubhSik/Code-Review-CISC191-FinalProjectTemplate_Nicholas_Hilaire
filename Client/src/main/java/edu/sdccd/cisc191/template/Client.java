@@ -21,30 +21,100 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
 
+    /**
+     * Starts a connection to the specified server IP and port.
+     * Handles connection errors and prints a message if the connection fails.
+     *
+     * @param ip   Server IP address
+     * @param port Server port number
+     * @throws IOException if the connection fails
+     */
+
     public void startConnection(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        try {
+            clientSocket = new Socket(ip, port);
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            System.out.println("Connected to server at " + ip + ":" + port);
+        } catch (IOException e) {
+            // Close any partially opened resources if initialization failed
+            safeClose(in);
+            safeClose(out);
+            safeClose(clientSocket);
+            System.err.println("Could not connect to server: " + e.getMessage());
+            throw e;
+        }
     }
 
+    /**
+     * Sends a request to the server and reads the response.
+     * Handles IO errors and JSON parsing exceptions.
+     *
+     * @return The response from the server as a CustomerResponse object.
+     * @throws IOException if there is a problem with communication
+     * @throws Exception   if the response cannot be parsed
+     */
     public CustomerResponse sendRequest() throws Exception {
-        out.println(CustomerRequest.toJSON(new CustomerRequest(1)));
-        return CustomerResponse.fromJSON(in.readLine());
+        try {
+            out.println(CustomerRequest.toJSON(new CustomerRequest(1)));
+            String responseLine = in.readLine();
+            if (responseLine == null) {
+                throw new IOException("Server closed the connection unexpectedly.");
+            }
+            return CustomerResponse.fromJSON(responseLine);
+        } catch (IOException e) {
+            System.err.println("Error communicating with server: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            System.err.println("Error parsing server response: " + e.getMessage());
+            throw e;
+        }
+    }
+    /**
+     * Closes the client connection and associated resources.
+     * Handles exceptions during close and logs any problems.
+     */
+    public void stopConnection() throws IOException {
+        safeClose(in);
+        safeClose(out);
+        safeClose(clientSocket);
+        System.out.println("Client connection closed.");
     }
 
-    public void stopConnection() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
+    /**
+     * Helper method to quietly close Closeable resources (streams, sockets, etc.)
+     * @param resource The resource to close (can be null)
+     */
+    private void safeClose(Closeable resource) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (IOException e) {
+                System.err.println("Error closing resource: " + e.getMessage());
+            }
+        }
     }
-    public static void main(String[] args) {
+
+    /**
+     * Main entry point. Starts the client, sends a request, prints the response, and closes the connection.
+     * Handles all exceptions and prints stack traces for debugging.
+     *
+     * @param args Command line arguments (not used)
+     */
+
+    public static void main(String[] args) throws IOException {
         Client client = new Client();
         try {
             client.startConnection("127.0.0.1", 4444);
             System.out.println(client.sendRequest().toString());
-            client.stopConnection();
-        } catch(Exception e) {
+        } catch (IOException e) {
+            System.err.println("Network error: " + e.getMessage());
             e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            client.stopConnection();
         }
     }
 } //end class Client

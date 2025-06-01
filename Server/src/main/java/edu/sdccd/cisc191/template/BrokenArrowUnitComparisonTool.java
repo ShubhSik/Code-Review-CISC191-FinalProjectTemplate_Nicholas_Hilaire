@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -46,12 +47,46 @@ public class BrokenArrowUnitComparisonTool extends Application
     private List<Unit> unitList;
     private Map<String, Image> unitImageMap;
 
+    /**
+     * Displays an error message to the user using a JavaFX alert dialog,
+     * and also logs the error message to the console. If the dialog cannot
+     * be shown (for example, if not on the JavaFX Application thread), only
+     * logs the error.
+     *
+     * @param message the error message to display
+     */
+
+    private void showError(String message) {
+        System.err.println(message);
+        try {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("An error occurred");
+            alert.setContentText(message);
+            alert.showAndWait();
+        } catch (Exception ex) {
+            System.err.println("Failed to show alert: " + ex.getMessage());
+        }
+    }
+
     @Override
     public void start(Stage primaryStage)
     {
         //Loads units from CSV Change the unit arrow to List<Unit>
-        List<Unit> unitList = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
-        System.out.println("Units loaded: " + unitList.size());
+
+        /**
+         * Loads the unit list from a CSV file.
+         * Exception handling is included to gracefully handle missing files or parsing errors.
+         * If loading fails, the user is shown an error dialog and the unit list is set to empty.
+         */
+        try {
+            unitList = UnitStatsLoader.loadUnits("C:\\Users\\Nicko\\IdeaProjects\\CISC191-FinalProjectTemplate\\Server\\src\\main\\resources\\Broken Arrow Unit Stats.csv");
+            System.out.println("Units loaded: " + unitList.size());
+        } catch (Exception e) {
+            showError("Error loading unit data: " + e.getMessage());
+            unitList = List.of(); // fallback to empty list
+        }
+
 
         Map<String, List<Unit>> unitsByType = unitList.stream()
                 .collect(Collectors.groupingBy(Unit::getUnitType));
@@ -82,17 +117,27 @@ public class BrokenArrowUnitComparisonTool extends Application
 
         //Loads images into javaFX memory
         unitImageMap = new HashMap<>();
+
+        /**
+         * Loads images for each unit. Handles missing image files and I/O exceptions.
+         * If an image cannot be loaded, the user is notified via an error dialog.
+         * Continues loading remaining images even if one fails.
+         */
         for (Map.Entry<String, String> entry : imageFileName.entrySet()) {
             String displayName = entry.getKey();
             String fileName = entry.getValue();
-            InputStream is = getClass().getResourceAsStream("/images/" + fileName);
-            if (is == null) {
-                System.err.println("Missing image resource: " + fileName);
-                continue;
+            try (InputStream is = getClass().getResourceAsStream("/images/" + fileName)) {
+                if (is == null) {
+                    showError("Missing image resource: " + fileName);
+                    continue;
+                }
+                Image img = new Image(is);
+                unitImageMap.put(displayName, img);
+            } catch (Exception ex) {
+                showError("Failed to load image " + fileName + ": " + ex.getMessage());
             }
-            Image img = new Image(is);
-            unitImageMap.put(displayName, img);
         }
+
 
 
         // Create ComboBoxes and populate them with units by Switching to List<Unit> now it can feed easier into the ComboBoxes
@@ -152,13 +197,28 @@ public class BrokenArrowUnitComparisonTool extends Application
         primaryStage.show();
     }
 
+
+    /**
+     * Sets the image for the unit in the specified panel.
+     * If the image is missing, displays an error dialog and clears the image view.
+     *
+     * @param unit the selected unit
+     * @param panel the panel containing the ImageView
+     */
     private void showUnit(Unit unit, VBox panel)
     {
         if (unit == null) return;
 
         // 1) Update the images
         ImageView iv = (ImageView) panel.lookup("#unitImageView");
-        iv.setImage(unitImageMap.get(unit.getUnitName()));
+        Image image = unitImageMap.get(unit.getUnitName());
+        if (image == null) {
+            showError("Image not found for unit: " + unit.getUnitName());
+            iv.setImage(null);
+        } else {
+            iv.setImage(image);
+        }
+
 
         // 2) Update borderpane labels
         updatePanel(panel, unit);
